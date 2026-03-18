@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  ces-sales:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ces-sales
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:-https://your-project.supabase.co}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ces-sales.rule=Host(`ces.msoftthai.com`)"
+      - "traefik.http.routers.ces-sales.entrypoints=websecure"
+      - "traefik.http.routers.ces-sales.tls.certresolver=letsencrypt"
+      - "traefik.http.services.ces-sales.loadbalancer.server.port=3000"
+      - "traefik.docker.network=traefik"
+    networks:
+      - traefik
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  traefik:
+    external: true
